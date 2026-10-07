@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>定投收益计算器</title>
+<style>
+  body{font-family:"Microsoft YaHei",sans-serif;background:#f6f8fa;padding:28px}
+  .box{max-width:520px;margin:0 auto;background:#fff;padding:24px;border-radius:12px;
+       box-shadow:0 4px 16px rgba(0,0,0,.08)}
+  h2{margin:0 0 6px}
+  .tip{color:#59636e;font-size:13px;margin-bottom:14px}
+  label{display:block;margin:12px 0 4px;font-size:13.5px;color:#59636e}
+  input{width:100%;padding:9px;border:1px solid #d1d9e0;border-radius:6px;font-size:15px}
+  button{margin-top:16px;width:100%;padding:11px;background:#1a7f37;color:#fff;border:0;
+         border-radius:6px;font-size:16px;cursor:pointer}
+  .out{margin-top:18px;padding:14px;background:#f6f8fa;border-radius:8px;
+       font-size:15px;line-height:1.9}
+  .out b{color:#0969da}
+  canvas{width:100%;margin-top:14px}
+</style>
+</head>
+<body>
+<div class="box">
+  <h2>定投收益计算器</h2>
+  <div class="tip">每月固定投一笔，按复利滚动，最后能变成多少？</div>
+
+  <label>每月定投金额（元）</label>
+  <input id="m" type="number" value="1000">
+  <label>预期年化收益率（%）</label>
+  <input id="r" type="number" value="8">
+  <label>投资年限（年）</label>
+  <input id="y" type="number" value="10">
+  <button onclick="calc()">计算</button>
+
+  <div class="out" id="res"></div>
+  <canvas id="cv" width="460" height="190"></canvas>
+</div>
+
+<script>
+function money(n){ return Math.round(n).toLocaleString("zh-CN"); }
+
+function calc(){
+  var m = +document.getElementById("m").value;
+  var r = +document.getElementById("r").value / 100;
+  var y = +document.getElementById("y").value;
+
+  if (!(m > 0 && y > 0)) {
+    document.getElementById("res").innerHTML = "请填写大于 0 的金额和年限";
+    return;
+  }
+
+  var mr = r / 12, total = 0, invest = 0, yearly = [];
+  for (var i = 0; i < y * 12; i++) {
+    invest += m;                       // 每月投入
+    total = (total + m) * (1 + mr);    // 利滚利
+    if ((i + 1) % 12 === 0) yearly.push(total);
+  }
+
+  var gain = total - invest;
+  document.getElementById("res").innerHTML =
+    "累计投入：<b>" + money(invest) + "</b> 元<br>" +
+    "期末资产：<b>" + money(total) + "</b> 元<br>" +
+    "投资收益：<b>" + money(gain) + "</b> 元<br>" +
+    "收益率：<b>" + (gain / invest * 100).toFixed(1) + "%</b>";
+
+  draw(yearly);
+}
+
+function draw(arr){
+  var cv = document.getElementById("cv");
+  var x = cv.getContext("2d");
+  var W = cv.width, H = cv.height;
+  x.clearRect(0, 0, W, H);
+  var max = Math.max.apply(null, arr);
+  var bw = W / arr.length;
+  for (var i = 0; i < arr.length; i++) {
+    var h = arr[i] / max * (H - 18);
+    var g = x.createLinearGradient(0, H - h, 0, H);
+    g.addColorStop(0, "#56d364");
+    g.addColorStop(1, "#0969da");
+    x.fillStyle = g;
+    x.fillRect(i * bw + 2, H - h, bw - 4, h);
+  }
+}
+
+calc();
+</script>
+</body>
+</html>
